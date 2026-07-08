@@ -57,9 +57,13 @@ export async function updateCompanySettings(id: string, values: CompanySettingsF
   return { error: null };
 }
 
+const MAX_LOGO_SIZE = 5 * 1024 * 1024; // 5MB, en línea con serverActions.bodySizeLimit
+
 export async function uploadCompanyLogo(id: string, formData: FormData) {
   const file = formData.get("logo");
   if (!(file instanceof File) || file.size === 0) return { error: "Seleccioná un archivo" };
+  if (!file.type.startsWith("image/")) return { error: "El archivo debe ser una imagen" };
+  if (file.size > MAX_LOGO_SIZE) return { error: "La imagen no puede superar los 5MB" };
 
   const supabase = await createClient();
   const ext = file.name.split(".").pop() ?? "png";
@@ -69,7 +73,10 @@ export async function uploadCompanyLogo(id: string, formData: FormData) {
     .from("logos")
     .upload(path, file, { upsert: true, contentType: file.type });
 
-  if (uploadError) return { error: "No se pudo subir el logo" };
+  if (uploadError) {
+    console.error("uploadCompanyLogo storage error:", uploadError);
+    return { error: `No se pudo subir el logo: ${uploadError.message}` };
+  }
 
   const {
     data: { publicUrl },

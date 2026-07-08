@@ -16,6 +16,8 @@ import {
   type CategoryBreakdownItem,
   type MonthlyPoint,
 } from "@/components/finance/monthly-summary";
+import { PendingChargesTable } from "@/components/finance/pending-charges-table";
+import { buildPendingCharges, type PendingChargeSource } from "@/lib/finance/pending-charges";
 import { TRANSACTION_ORIGINS, TRANSACTION_TYPES } from "@/lib/types/finance";
 import type {
   ExpenseCategory,
@@ -88,6 +90,8 @@ export default async function FinanzasPage({
     { data: categoriesData },
     { data: recurringData },
     { data: summaryData },
+    { data: pendingInstallmentsData },
+    { data: pendingChargesData },
   ] = await Promise.all([
     transactionsQuery,
     supabase
@@ -106,12 +110,95 @@ export default async function FinanzasPage({
       .from("transactions")
       .select("type, amount, currency, date, category_id, category:expense_categories(id, name)")
       .gte("date", dateInputValue(rangeStart)),
+    supabase
+      .from("installments")
+      .select(
+        `id, amount, due_date, status,
+         contract_item:contract_items(id, description, currency,
+           contract:contracts(id, client:clients(id, first_name, last_name, business_name, phone)))`
+      )
+      .in("status", ["pendiente", "vencida"]),
+    supabase
+      .from("subscription_charges")
+      .select(
+        `id, amount, period, status,
+         contract_item:contract_items(id, description, currency, billing_day,
+           contract:contracts(id, client:clients(id, first_name, last_name, business_name, phone)))`
+      )
+      .in("status", ["pendiente", "vencida"]),
   ]);
 
   const transactions = (transactionsData ?? []) as unknown as TransactionWithRelations[];
   const categories = (categoriesData ?? []) as ExpenseCategory[];
   const recurringExpenses = (recurringData ?? []) as unknown as RecurringExpenseWithRelations[];
   const summaryRows = (summaryData ?? []) as unknown as SummaryRow[];
+
+  type PendingClientJoin = {
+    id: string;
+    first_name: string;
+    last_name: string;
+    business_name: string | null;
+    phone: string | null;
+  };
+  type PendingContractItemJoin = {
+    description: string;
+    currency: "ARS" | "USD";
+    billing_day?: number | null;
+    contract: { client: PendingClientJoin | null } | null;
+  };
+  type PendingInstallmentRow = {
+    id: string;
+    amount: number;
+    due_date: string;
+    status: string;
+    contract_item: PendingContractItemJoin | null;
+  };
+  type PendingChargeRow = {
+    id: string;
+    amount: number;
+    period: string;
+    status: string;
+    contract_item: PendingContractItemJoin | null;
+  };
+
+  const pendingSources: PendingChargeSource[] = [];
+
+  for (const row of (pendingInstallmentsData ?? []) as unknown as PendingInstallmentRow[]) {
+    const client = row.contract_item?.contract?.client;
+    if (!client) continue;
+    pendingSources.push({
+      id: row.id,
+      table: "installments",
+      status: row.status,
+      dueDate: row.due_date,
+      amount: row.amount,
+      currency: row.contract_item!.currency,
+      description: row.contract_item!.description,
+      clientId: client.id,
+      clientName: client.business_name || `${client.first_name} ${client.last_name}`,
+      phone: client.phone,
+    });
+  }
+
+  for (const row of (pendingChargesData ?? []) as unknown as PendingChargeRow[]) {
+    const client = row.contract_item?.contract?.client;
+    if (!client) continue;
+    const billingDay = row.contract_item?.billing_day ?? 1;
+    pendingSources.push({
+      id: row.id,
+      table: "subscription_charges",
+      status: row.status,
+      dueDate: `${row.period.slice(0, 7)}-${String(billingDay).padStart(2, "0")}`,
+      amount: row.amount,
+      currency: row.contract_item!.currency,
+      description: row.contract_item!.description,
+      clientId: client.id,
+      clientName: client.business_name || `${client.first_name} ${client.last_name}`,
+      phone: client.phone,
+    });
+  }
+
+  const pendingCharges = buildPendingCharges(pendingSources, dateInputValue(now));
 
   const monthBuckets = new Map<string, MonthlyPoint>();
   for (let i = 11; i >= 0; i--) {
@@ -193,6 +280,18 @@ export default async function FinanzasPage({
       />
 
       <MonthlyReportCard />
+
+      <div className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold tracking-tight">
+          Cuotas pendientes de pago
+          {pendingCharges.length > 0 && (
+            <span className="ml-2 text-sm font-normal text-muted-foreground">
+              {pendingCharges.length}
+            </span>
+          )}
+        </h2>
+        <PendingChargesTable charges={pendingCharges} />
+      </div>
 
       <div className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold tracking-tight">Libro de movimientos</h2>

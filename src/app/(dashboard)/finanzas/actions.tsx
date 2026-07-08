@@ -14,6 +14,9 @@ import {
 import { loadMonthlyReportData } from "@/lib/finance/monthly-report";
 import { buildMonthlyReportWorkbook } from "@/lib/finance/report-excel";
 import { MonthlyReportPdfTemplate } from "@/lib/finance/report-pdf-template";
+import { normalizePhoneToWhatsApp } from "@/lib/phone";
+import { buildCuotaReminderMessage } from "@/lib/whatsapp/reminders-logic";
+import { sendWhatsAppMessage } from "@/lib/whatsapp/provider";
 
 const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 
@@ -160,6 +163,102 @@ export async function generateMonthlyReportPdf(month: string) {
     base64: buffer.toString("base64"),
     filename: `winf-finanzas-${month}.pdf`,
   };
+}
+
+export async function sendManualCuotaReminder(
+  table: "installments" | "subscription_charges",
+  id: string
+) {
+  const supabase = await createClient();
+
+  const selectColumns =
+    table === "installments"
+      ? `id, amount, due_date, status,
+         contract_item:contract_items(id, description, currency,
+           contract:contracts(id, client_id, client:clients(id, first_name, phone)))`
+      : `id, amount, period, status,
+         contract_item:contract_items(id, description, currency, billing_day,
+           contract:contracts(id, client_id, client:clients(id, first_name, phone)))`;
+
+  const { data, error } = await supabase.from(table).select(selectColumns).eq("id", id).single();
+  if (error || !data) return { error: "No se encontró la cuota" };
+
+  type Row = {
+    id: string;
+    amount: number;
+    status: string;
+    due_date?: string;
+    period?: string;
+    contract_item: {
+      description: string;
+      currency: "ARS" | "USD";
+      billing_day?: number | null;
+      contract: {
+        client_id: string;
+        client: { id: string; first_name: string; phone: string | null } | null;
+      } | null;
+    } | null;
+  };
+
+  const row = data as unknown as Row;
+  const client = row.contract_item?.contract?.client;
+  if (!client) return { error: "No se encontró el cliente de la cuota" };
+  if (row.status !== "pendiente" && row.status !== "vencida") {
+    return { error: "Esta cuota ya no está pendiente de pago" };
+  }
+  if (!client.phone) return { error: "El cliente no tiene un teléfono cargado" };
+
+  const dueDate =
+    table === "installments"
+      ? row.due_date!
+      : `${row.period!.slice(0, 7)}-${String(row.contract_item?.billing_day ?? 1).padStart(2, "0")}`;
+
+  const message = buildCuotaReminderMessage({
+    clientFirstName: client.first_name,
+    description: row.contract_item!.description,
+    amount: row.amount,
+    currency: row.contract_item!.currency,
+    dueDate,
+  });
+
+  const phone = normalizePhoneToWhatsApp(client.phone);
+  const result = await sendWhatsAppMessage(phone, message);
+  const sentAt = new Date().toISOString();
+
+  const status: "enviado" | "error" | "sin_configurar" = result.success
+    ? "enviado"
+    : result.error === "sin_configurar"
+      ? "sin_configurar"
+      : "error";
+
+  const { error: logError } = await supabase.from("whatsapp_reminders").upsert(
+    {
+      type: "cuota" as const,
+      reference_table: table,
+      reference_id: id,
+      client_id: client.id,
+      status,
+      message,
+      error_message: result.success ? null : (result.error ?? null),
+      sent_at: result.success ? sentAt : null,
+      updated_at: sentAt,
+    },
+    { onConflict: "reference_table,reference_id" }
+  );
+
+  if (logError) return { error: "No se pudo registrar el recordatorio" };
+  if (!result.success) {
+    return {
+      error:
+        status === "sin_configurar"
+          ? "Todavía no configuraste un proveedor de WhatsApp (ver .env.example)"
+          : `No se pudo enviar el recordatorio: ${result.error ?? "error desconocido"}`,
+    };
+  }
+
+  revalidatePath("/finanzas");
+  revalidatePath("/configuracion");
+  return { error: null };
 }
 
 export async function getReceiptUrl(path: string) {
