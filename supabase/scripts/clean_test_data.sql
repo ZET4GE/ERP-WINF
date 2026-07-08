@@ -23,6 +23,7 @@
 -- IMPORTANTE: esto es irreversible. Hacé un backup/point-in-time-restore
 -- desde el dashboard de Supabase antes de correrlo si tenés alguna duda.
 
+
 truncate table
   public.whatsapp_reminders,
   public.ticket_updates,
