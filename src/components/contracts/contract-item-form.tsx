@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Search, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { secondaryFieldLabel } from "@/components/stock/bulk-add-dialog";
 import { formatCurrency } from "@/lib/format";
 import { contractItemSchema, type ContractItemFormValues } from "@/lib/contracts/schema";
 import { CONTRACT_ITEM_TYPES, type ContractItemType } from "@/lib/types/contract";
@@ -35,7 +36,9 @@ export interface CategoryOption {
 export interface InventoryOption {
   id: string;
   serial_number: string;
+  manufacturer_number: string | null;
   product_name: string;
+  product_category: string | null;
 }
 
 const ITEM_TYPE_LABEL: Record<ContractItemType, string> = {
@@ -73,6 +76,7 @@ export function ContractItemForm({
   const [downPayment, setDownPayment] = useState(0);
   const [installmentsCount, setInstallmentsCount] = useState(6);
   const [inventoryItemId, setInventoryItemId] = useState<string | null>(null);
+  const [inventoryQuery, setInventoryQuery] = useState("");
 
   // cargo_unico
   const [singleAmount, setSingleAmount] = useState(0);
@@ -94,6 +98,22 @@ export function ContractItemForm({
       ),
     [servicesInCategory, itemType]
   );
+
+  const selectedInventory = useMemo(
+    () => availableInventory.find((option) => option.id === inventoryItemId) ?? null,
+    [availableInventory, inventoryItemId]
+  );
+
+  const filteredInventory = useMemo(() => {
+    const query = inventoryQuery.trim().toLowerCase();
+    if (!query) return availableInventory;
+    return availableInventory.filter(
+      (option) =>
+        option.serial_number.toLowerCase().includes(query) ||
+        option.manufacturer_number?.toLowerCase().includes(query) ||
+        option.product_name.toLowerCase().includes(query)
+    );
+  }, [availableInventory, inventoryQuery]);
 
   function resetTypeFields() {
     setError(null);
@@ -184,6 +204,7 @@ export function ContractItemForm({
     setDownPayment(0);
     setInstallmentsCount(6);
     setInventoryItemId(null);
+    setInventoryQuery("");
     setSingleAmount(0);
     setBreakdown([]);
     setBillingDay(1);
@@ -315,25 +336,71 @@ export function ContractItemForm({
             </p>
 
             <div className="flex flex-col gap-1.5 rounded-lg border border-dashed p-3">
-              <Label className="text-muted-foreground">
-                Equipo de stock (número de serie)
-              </Label>
-              <Select
-                value={inventoryItemId ?? "none"}
-                onValueChange={(v) => setInventoryItemId(v === "none" ? null : v)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Seleccioná un equipo disponible" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sin asignar todavía</SelectItem>
-                  {availableInventory.map((option) => (
-                    <SelectItem key={option.id} value={option.id}>
-                      {option.product_name} — {option.serial_number}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label className="text-muted-foreground">Equipo de stock</Label>
+
+              {selectedInventory ? (
+                <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
+                  <div>
+                    <p className="text-sm font-medium">
+                      {selectedInventory.product_name} — {selectedInventory.serial_number}
+                    </p>
+                    {selectedInventory.manufacturer_number && (
+                      <p className="text-xs text-muted-foreground">
+                        {secondaryFieldLabel(selectedInventory.product_category)}:{" "}
+                        {selectedInventory.manufacturer_number}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setInventoryItemId(null);
+                      setInventoryQuery("");
+                    }}
+                  >
+                    Cambiar
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={inventoryQuery}
+                      onChange={(e) => setInventoryQuery(e.target.value)}
+                      placeholder="Buscar por S/N, MAC o número de kit..."
+                      className="pl-8"
+                    />
+                  </div>
+                  <div className="flex max-h-48 flex-col divide-y overflow-y-auto rounded-lg border">
+                    {filteredInventory.length === 0 && (
+                      <p className="p-3 text-sm text-muted-foreground">
+                        No hay equipos disponibles que coincidan.
+                      </p>
+                    )}
+                    {filteredInventory.map((option) => (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => setInventoryItemId(option.id)}
+                        className="flex flex-col items-start gap-0.5 p-3 text-left text-sm hover:bg-muted/50"
+                      >
+                        <span className="font-medium">
+                          {option.product_name} — {option.serial_number}
+                        </span>
+                        {option.manufacturer_number && (
+                          <span className="text-xs text-muted-foreground">
+                            {secondaryFieldLabel(option.product_category)}:{" "}
+                            {option.manufacturer_number}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -35,7 +35,7 @@ export default async function NuevoContratoPage({
         .order("name"),
       supabase
         .from("inventory_items")
-        .select("id, serial_number, product:products(name)")
+        .select("id, serial_number, manufacturer_number, product:products(name, category)")
         .eq("status", "en_stock")
         .order("serial_number"),
       supabase.from("company_settings").select("default_currency, default_billing_day").limit(1).single(),
@@ -68,12 +68,17 @@ export default async function NuevoContratoPage({
     : undefined;
 
   const availableInventory = (inventoryItems ?? []).map((item) => {
-    const product = item.product as unknown as { name: string } | { name: string }[] | null;
-    const productName = Array.isArray(product) ? product[0]?.name : product?.name;
+    const product = item.product as unknown as
+      | { name: string; category: string | null }
+      | { name: string; category: string | null }[]
+      | null;
+    const productInfo = Array.isArray(product) ? product[0] : product;
     return {
       id: item.id,
       serial_number: item.serial_number,
-      product_name: productName ?? "—",
+      manufacturer_number: item.manufacturer_number,
+      product_name: productInfo?.name ?? "—",
+      product_category: productInfo?.category ?? null,
     };
   });
 
