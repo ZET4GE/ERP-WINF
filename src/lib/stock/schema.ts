@@ -14,11 +14,17 @@ export const productSchema = z.object({
 
 export type ProductFormValues = z.infer<typeof productSchema>;
 
-export const bulkAddSchema = z.object({
-  product_id: z.string().min(1, "Requerido"),
-  raw_serials: z.string().min(1, "Ingresá al menos un número de serie"),
+export const bulkAddEntrySchema = z.object({
+  serial: z.string().min(1, "Requerido"),
+  manufacturer: z.string().optional(),
 });
 
+export const bulkAddSchema = z.object({
+  product_id: z.string().min(1, "Requerido"),
+  entries: z.array(bulkAddEntrySchema).min(1, "Agregá al menos un equipo"),
+});
+
+export type BulkAddEntryValues = z.infer<typeof bulkAddEntrySchema>;
 export type BulkAddFormValues = z.infer<typeof bulkAddSchema>;
 
 export const manageItemSchema = z

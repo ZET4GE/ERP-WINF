@@ -69,26 +69,17 @@ export async function updateProduct(id: string, values: ProductFormValues) {
   return { error: null };
 }
 
-function parseSerialLines(raw: string) {
-  return raw
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const [serial, manufacturer] = line.split(",").map((part) => part.trim());
-      return { serial, manufacturer: manufacturer || null };
-    })
-    .filter((entry) => entry.serial.length > 0);
-}
-
 export async function bulkAddInventoryItems(values: {
   product_id: string;
-  raw_serials: string;
+  entries: { serial: string; manufacturer?: string }[];
 }) {
   const parsed = bulkAddSchema.safeParse(values);
   if (!parsed.success) return { error: "Datos inválidos", created: 0, failed: [] as string[] };
 
-  const entries = parseSerialLines(parsed.data.raw_serials);
+  const entries = parsed.data.entries
+    .map((e) => ({ serial: e.serial.trim(), manufacturer: e.manufacturer?.trim() || null }))
+    .filter((e) => e.serial.length > 0);
+
   if (entries.length === 0) {
     return { error: "Ingresá al menos un número de serie", created: 0, failed: [] as string[] };
   }

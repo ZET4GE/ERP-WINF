@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { InventoryStatusBadge } from "@/components/stock/inventory-status-badge";
-import { BulkAddDialog } from "@/components/stock/bulk-add-dialog";
+import { BulkAddDialog, secondaryFieldLabel } from "@/components/stock/bulk-add-dialog";
 import { ManageItemDialog } from "@/components/stock/manage-item-dialog";
 import { InventoryHistoryDialog } from "@/components/stock/inventory-history-dialog";
 import { formatCurrency } from "@/lib/format";
@@ -101,6 +101,7 @@ export function ProductStockCard({
               <TableHeader>
                 <TableRow>
                   <TableHead>S/N</TableHead>
+                  <TableHead>{secondaryFieldLabel(product.category)}</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
@@ -109,7 +110,7 @@ export function ProductStockCard({
               <TableBody>
                 {items.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
                       Sin equipos cargados.
                     </TableCell>
                   </TableRow>
@@ -117,6 +118,9 @@ export function ProductStockCard({
                   items.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">{item.serial_number}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {item.manufacturer_number || "—"}
+                      </TableCell>
                       <TableCell>
                         <InventoryStatusBadge status={item.status} />
                       </TableCell>
@@ -159,6 +163,7 @@ export function ProductStockCard({
         onOpenChange={setBulkAddOpen}
         productId={product.id}
         productName={product.name}
+        productCategory={product.category}
       />
 
       {managingItem && (
