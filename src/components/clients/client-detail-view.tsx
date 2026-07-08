@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import {
-  ArrowLeftRight,
   Building2,
   CalendarClock,
   FileText,
@@ -47,6 +46,8 @@ import {
 import { EmptyState } from "@/components/empty-state";
 import { ClientMiniMap } from "@/components/clients/client-mini-map";
 import { ContractsTable } from "@/components/contracts/contracts-table";
+import { DocumentsTable } from "@/components/documents/documents-table";
+import { TransactionsTable } from "@/components/finance/transactions-table";
 import {
   Table,
   TableBody,
@@ -73,6 +74,8 @@ import type { ContractWithRelations } from "@/lib/types/contract";
 import type { InventoryItemWithProduct } from "@/lib/types/inventory";
 import type { AppointmentWithRelations } from "@/lib/types/appointment";
 import type { TicketWithRelations } from "@/lib/types/ticket";
+import type { DocumentWithRelations } from "@/lib/types/document";
+import type { TransactionWithRelations } from "@/lib/types/finance";
 import {
   changeClientStatus,
   deleteClientRecord,
@@ -102,6 +105,8 @@ export function ClientDetailView({
   appointments,
   technicians,
   tickets,
+  documents,
+  transactions,
 }: {
   client: Client;
   contracts: ContractWithRelations[];
@@ -109,6 +114,8 @@ export function ClientDetailView({
   appointments: AppointmentWithRelations[];
   technicians: { id: string; full_name: string }[];
   tickets: TicketWithRelations[];
+  documents: DocumentWithRelations[];
+  transactions: TransactionWithRelations[];
 }) {
   const [isPending, startTransition] = useTransition();
   const [historyItem, setHistoryItem] = useState<InventoryItemWithProduct>();
@@ -351,12 +358,18 @@ export function ClientDetailView({
           )}
         </TabsContent>
 
-        <TabsContent value="documentos" className="mt-4">
-          <EmptyState
-            icon={FileText}
-            title="Sin documentos"
-            description="Presupuestos, contratos y facturas del cliente van a listarse acá cuando esté listo el módulo de Documentos."
-          />
+        <TabsContent value="documentos" className="mt-4 flex flex-col gap-4">
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              render={<Link href={`/documentos/nuevo?client_id=${client.id}`} />}
+            >
+              <FileText />
+              Nuevo documento
+            </Button>
+          </div>
+          <DocumentsTable documents={documents} />
         </TabsContent>
 
         <TabsContent value="turnos" className="mt-4 flex flex-col gap-4">
@@ -465,11 +478,7 @@ export function ClientDetailView({
         </TabsContent>
 
         <TabsContent value="movimientos" className="mt-4">
-          <EmptyState
-            icon={ArrowLeftRight}
-            title="Sin movimientos"
-            description="El historial de pagos y movimientos del cliente va a aparecer acá cuando esté listo el módulo de Finanzas."
-          />
+          <TransactionsTable transactions={transactions} />
         </TabsContent>
       </Tabs>
 
