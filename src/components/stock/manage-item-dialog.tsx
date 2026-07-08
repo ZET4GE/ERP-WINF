@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { manageInventoryItem } from "@/app/(dashboard)/stock/actions";
 import { searchClients } from "@/app/(dashboard)/contratos/actions";
+import { secondaryFieldLabel } from "@/components/stock/bulk-add-dialog";
 import { INVENTORY_STATUSES, type InventoryStatus } from "@/lib/types/inventory";
 import { INVENTORY_STATUS_LABEL } from "@/components/stock/inventory-status-badge";
 import type { InventoryItemWithProduct } from "@/lib/types/inventory";
@@ -40,6 +41,8 @@ export function ManageItemDialog({
   onOpenChange: (open: boolean) => void;
   item: InventoryItemWithProduct;
 }) {
+  const [serialNumber, setSerialNumber] = useState(item.serial_number);
+  const [manufacturerNumber, setManufacturerNumber] = useState(item.manufacturer_number ?? "");
   const [status, setStatus] = useState<InventoryStatus>(item.status);
   const [selectedClient, setSelectedClient] = useState<ClientOption | null>(item.client);
   const [query, setQuery] = useState("");
@@ -48,8 +51,12 @@ export function ManageItemDialog({
   const [searching, startSearch] = useTransition();
   const [isPending, startTransition] = useTransition();
 
+  const secondaryLabel = secondaryFieldLabel(item.product.category);
+
   useEffect(() => {
     if (open) {
+      setSerialNumber(item.serial_number);
+      setManufacturerNumber(item.manufacturer_number ?? "");
       setStatus(item.status);
       setSelectedClient(item.client);
       setQuery("");
@@ -69,6 +76,8 @@ export function ManageItemDialog({
   function handleSubmit() {
     startTransition(async () => {
       const result = await manageInventoryItem(item.id, {
+        serial_number: serialNumber,
+        manufacturer_number: manufacturerNumber,
         status,
         client_id: status === "en_stock" ? null : selectedClient?.id ?? null,
         notes,
@@ -94,6 +103,20 @@ export function ManageItemDialog({
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label>S/N</Label>
+              <Input value={serialNumber} onChange={(e) => setSerialNumber(e.target.value)} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>{secondaryLabel}</Label>
+              <Input
+                value={manufacturerNumber}
+                onChange={(e) => setManufacturerNumber(e.target.value)}
+              />
+            </div>
+          </div>
+
           <div className="flex flex-col gap-1.5">
             <Label>Estado</Label>
             <Select value={status} onValueChange={(v) => setStatus(v as InventoryStatus)}>
@@ -177,7 +200,9 @@ export function ManageItemDialog({
         <DialogFooter>
           <Button
             onClick={handleSubmit}
-            disabled={isPending || (status === "asignado" && !selectedClient)}
+            disabled={
+              isPending || !serialNumber.trim() || (status === "asignado" && !selectedClient)
+            }
           >
             {isPending ? "Guardando..." : "Guardar"}
           </Button>

@@ -29,6 +29,8 @@ export type BulkAddFormValues = z.infer<typeof bulkAddSchema>;
 
 export const manageItemSchema = z
   .object({
+    serial_number: z.string().min(1, "Requerido"),
+    manufacturer_number: z.string().optional(),
     status: z.enum(INVENTORY_STATUSES),
     client_id: z.string().nullable(),
     notes: z.string().optional(),

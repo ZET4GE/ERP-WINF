@@ -146,13 +146,20 @@ export async function manageInventoryItem(itemId: string, values: ManageItemForm
   const { error: updateError } = await supabase
     .from("inventory_items")
     .update({
+      serial_number: parsed.data.serial_number.trim(),
+      manufacturer_number: parsed.data.manufacturer_number?.trim() || null,
       status: parsed.data.status,
       client_id: clientId,
       notes: parsed.data.notes || null,
     })
     .eq("id", itemId);
 
-  if (updateError) return { error: "No se pudo actualizar el equipo" };
+  if (updateError) {
+    if (updateError.code === "23505") {
+      return { error: "Ya existe un equipo con ese número de serie" };
+    }
+    return { error: "No se pudo actualizar el equipo" };
+  }
 
   const { error: movementError } = await supabase.from("inventory_movements").insert({
     inventory_item_id: itemId,
@@ -166,6 +173,17 @@ export async function manageInventoryItem(itemId: string, values: ManageItemForm
   if (movementError) {
     return { error: "El equipo se actualizó pero no se pudo registrar el historial" };
   }
+
+  revalidatePath("/stock");
+  revalidatePath("/clientes");
+  return { error: null };
+}
+
+export async function deleteInventoryItem(itemId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("inventory_items").delete().eq("id", itemId);
+
+  if (error) return { error: "No se pudo eliminar el equipo" };
 
   revalidatePath("/stock");
   revalidatePath("/clientes");

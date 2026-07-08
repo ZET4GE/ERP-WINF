@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { AlertTriangle, History, Plus, Settings2 } from "lucide-react";
+import { useState, useTransition } from "react";
+import { AlertTriangle, History, Plus, Settings2, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,10 +14,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { InventoryStatusBadge } from "@/components/stock/inventory-status-badge";
 import { BulkAddDialog, secondaryFieldLabel } from "@/components/stock/bulk-add-dialog";
 import { ManageItemDialog } from "@/components/stock/manage-item-dialog";
 import { InventoryHistoryDialog } from "@/components/stock/inventory-history-dialog";
+import { deleteInventoryItem } from "@/app/(dashboard)/stock/actions";
 import { formatCurrency } from "@/lib/format";
 import { INVENTORY_STATUSES } from "@/lib/types/inventory";
 import type { Product } from "@/lib/types/product";
@@ -35,6 +48,18 @@ export function ProductStockCard({
   const [bulkAddOpen, setBulkAddOpen] = useState(false);
   const [managingItem, setManagingItem] = useState<InventoryItemWithProduct>();
   const [historyItem, setHistoryItem] = useState<InventoryItemWithProduct>();
+  const [isDeleting, startDelete] = useTransition();
+
+  function handleDelete(itemId: string) {
+    startDelete(async () => {
+      const result = await deleteInventoryItem(itemId);
+      if (result?.error) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success("Equipo eliminado");
+    });
+  }
 
   const availableCount = items.filter((i) => i.status === "en_stock").length;
   const lowStock = availableCount < product.min_stock_threshold;
@@ -147,6 +172,39 @@ export function ProductStockCard({
                           >
                             <History className="size-4" />
                           </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger
+                              render={
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  title="Eliminar"
+                                  disabled={isDeleting}
+                                />
+                              }
+                            >
+                              <Trash2 className="size-4" />
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>¿Eliminar equipo?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Se eliminará el equipo con S/N &quot;{item.serial_number}&quot;
+                                  y su historial de movimientos. Esta acción no se puede deshacer.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="bg-destructive text-white hover:bg-destructive/90"
+                                  onClick={() => handleDelete(item.id)}
+                                  disabled={isDeleting}
+                                >
+                                  Eliminar
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </TableCell>
                     </TableRow>
