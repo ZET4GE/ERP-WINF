@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Loader2, MapPin, Search } from "lucide-react";
+import { Loader2, MapPin, MapPinned, Search } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { parseCoordinates } from "@/lib/geo";
 
 const LocationPickerMap = dynamic(
   () => import("./location-picker-map").then((m) => m.LocationPickerMap),
@@ -37,6 +39,9 @@ export function LocationPicker({
   const [results, setResults] = useState<NominatimResult[]>([]);
   const [searching, setSearching] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [coordsInput, setCoordsInput] = useState("");
+  const [coordsError, setCoordsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -72,6 +77,17 @@ export function LocationPicker({
     onChange(parseFloat(result.lat), parseFloat(result.lon));
     setQuery(result.display_name);
     setResults([]);
+  }
+
+  function handleUseCoords() {
+    const parsed = parseCoordinates(coordsInput);
+    if (!parsed) {
+      setCoordsError("No se pudo interpretar. Probá con \"-30.219, -61.970\" o el formato de Google Maps.");
+      return;
+    }
+    onChange(parsed.lat, parsed.lng);
+    setCoordsError(null);
+    setCoordsInput("");
   }
 
   return (
@@ -114,6 +130,28 @@ export function LocationPicker({
           ? `Ubicación seleccionada: ${lat.toFixed(5)}, ${lng.toFixed(5)}. Arrastrá el pin o hacé click en el mapa para ajustar.`
           : "Buscá una dirección o hacé click en el mapa para ubicar al cliente."}
       </p>
+
+      <div className="flex flex-col gap-1.5 rounded-lg border border-dashed p-3">
+        <p className="text-xs text-muted-foreground">
+          Para zonas rurales sin dirección precisa: pegá las coordenadas exactas
+          desde Google Maps (click derecho sobre el punto → copiar).
+        </p>
+        <div className="flex gap-2">
+          <Input
+            value={coordsInput}
+            onChange={(e) => {
+              setCoordsInput(e.target.value);
+              setCoordsError(null);
+            }}
+            placeholder={`-30.219167, -61.970139  ó  30°13'09.0"S 61°58'12.5"W`}
+          />
+          <Button type="button" variant="outline" onClick={handleUseCoords}>
+            <MapPinned className="size-4" />
+            Usar
+          </Button>
+        </div>
+        {coordsError && <p className="text-xs text-destructive">{coordsError}</p>}
+      </div>
     </div>
   );
 }
