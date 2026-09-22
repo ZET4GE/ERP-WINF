@@ -123,6 +123,31 @@ export async function changeDocumentStatus(id: string, status: DocumentStatus) {
   return { error: null };
 }
 
+export async function deleteDocument(id: string) {
+  const supabase = await createClient();
+
+  const { data: existing, error: fetchError } = await supabase
+    .from("documents")
+    .select("status, pdf_url")
+    .eq("id", id)
+    .single();
+
+  if (fetchError || !existing) return { error: "Documento no encontrado" };
+  if (existing.status !== "borrador" && existing.status !== "cancelado") {
+    return { error: "Solo se pueden eliminar documentos en borrador o cancelados" };
+  }
+
+  if (existing.pdf_url) {
+    await supabase.storage.from("documents").remove([existing.pdf_url]);
+  }
+
+  const { error } = await supabase.from("documents").delete().eq("id", id);
+  if (error) return { error: "No se pudo eliminar el documento" };
+
+  revalidatePath("/documentos");
+  redirect("/documentos");
+}
+
 async function loadDocumentForPdf(documentId: string) {
   const supabase = await createClient();
   const { data: doc, error } = await supabase

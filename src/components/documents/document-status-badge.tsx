@@ -6,6 +6,7 @@ export const DOCUMENT_STATUS_LABEL: Record<DocumentStatus, string> = {
   borrador: "Borrador",
   enviado: "Enviado",
   aceptado: "Aceptado",
+  cancelado: "Cancelado",
   vencido: "Vencido",
 };
 
@@ -13,6 +14,7 @@ const STATUS_CLASS: Record<DocumentStatus, string> = {
   borrador: "border-transparent bg-muted text-muted-foreground",
   enviado: "border-transparent bg-blue-500/15 text-blue-600 dark:text-blue-400",
   aceptado: "border-transparent bg-primary/15 text-primary",
+  cancelado: "border-transparent bg-zinc-500/15 text-zinc-600 line-through dark:text-zinc-400",
   vencido: "border-transparent bg-destructive/15 text-destructive",
 };
 

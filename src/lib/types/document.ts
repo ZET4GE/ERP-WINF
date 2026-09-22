@@ -6,7 +6,7 @@ export const DOCUMENT_TYPES = [
 ] as const;
 export type DocumentType = (typeof DOCUMENT_TYPES)[number];
 
-export const DOCUMENT_STATUSES = ["borrador", "enviado", "aceptado", "vencido"] as const;
+export const DOCUMENT_STATUSES = ["borrador", "enviado", "aceptado", "cancelado", "vencido"] as const;
 export type DocumentStatus = (typeof DOCUMENT_STATUSES)[number];
 
 export interface DocumentItem {

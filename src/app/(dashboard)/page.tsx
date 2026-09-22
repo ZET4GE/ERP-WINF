@@ -12,7 +12,6 @@ import { DOCUMENT_TYPE_LABEL } from "@/components/documents/document-status-badg
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/lib/format";
 import type { AppointmentWithRelations } from "@/lib/types/appointment";
-import type { ContractWithRelations } from "@/lib/types/contract";
 import type { Client } from "@/lib/types/client";
 
 export const metadata: Metadata = {
@@ -48,7 +47,9 @@ export default async function DashboardPage() {
 
   const [
     { data: appointmentsData },
-    { data: contractsData },
+    { data: subscriptionItemsData },
+    { data: pendingInstallmentsData },
+    { data: pendingChargesData },
     { data: clientsActiveCount },
     { data: stockCount },
     { data: transactionsSummary },
@@ -69,20 +70,25 @@ export default async function DashboardPage() {
       .in("status", ["pendiente", "confirmado"])
       .order("start_at", { ascending: true })
       .limit(5),
+    // MRR: solo ítems de suscripción de contratos activos (no hace falta traer
+    // el resto de las líneas ni el historial de cuotas/cargos de todo el sistema).
     supabase
-      .from("contracts")
-      .select(
-        `id, client_id, title, status, start_date, notes, created_at,
-         client:clients(id, first_name, last_name, business_name),
-         items:contract_items(
-           id, contract_id, item_type, service_id, description, currency,
-           total_amount, down_payment, installments_count, inventory_item_id,
-           single_amount, monthly_amount, subscription_breakdown, billing_day,
-           subscription_start_date, created_at,
-           installments(id, contract_item_id, number, amount, due_date, status, paid_at, payment_method, created_at),
-           subscription_charges(id, contract_item_id, period, amount, status, paid_at, payment_method, created_at)
-         )`
-      ),
+      .from("contract_items")
+      .select("currency, monthly_amount, contracts!inner(status)")
+      .eq("item_type", "suscripcion")
+      .eq("contracts.status", "activo"),
+    // Cuotas por cobrar/vencidas: solo pendientes con vencimiento hasta fin de
+    // este mes (usa el índice status+due_date en vez de traer todo el historial).
+    supabase
+      .from("installments")
+      .select("amount, due_date, contract_item:contract_items(currency)")
+      .eq("status", "pendiente")
+      .lte("due_date", monthEnd),
+    supabase
+      .from("subscription_charges")
+      .select("amount, period, contract_item:contract_items(currency)")
+      .eq("status", "pendiente")
+      .lte("period", monthEnd),
     supabase
       .from("clients")
       .select("id", { count: "exact", head: true })
@@ -124,7 +130,21 @@ export default async function DashboardPage() {
   ]);
 
   const upcomingAppointments = (appointmentsData ?? []) as unknown as AppointmentWithRelations[];
-  const contracts = (contractsData ?? []) as unknown as ContractWithRelations[];
+
+  interface ActiveSubscriptionItemRow {
+    currency: "ARS" | "USD";
+    monthly_amount: number | null;
+  }
+  interface PendingInstallmentRow {
+    amount: number;
+    due_date: string;
+    contract_item: { currency: "ARS" | "USD" } | null;
+  }
+  interface PendingChargeRow {
+    amount: number;
+    period: string;
+    contract_item: { currency: "ARS" | "USD" } | null;
+  }
 
   let mrrArs = 0;
   let mrrUsd = 0;
@@ -133,33 +153,29 @@ export default async function DashboardPage() {
   let cobrarCount = 0;
   let vencidasCount = 0;
 
-  for (const contract of contracts) {
-    for (const item of contract.items) {
-      if (item.item_type === "suscripcion" && contract.status === "activo") {
-        if (item.currency === "ARS") mrrArs += item.monthly_amount ?? 0;
-        else mrrUsd += item.monthly_amount ?? 0;
-      }
+  for (const item of (subscriptionItemsData ?? []) as unknown as ActiveSubscriptionItemRow[]) {
+    if (item.currency === "ARS") mrrArs += item.monthly_amount ?? 0;
+    else mrrUsd += item.monthly_amount ?? 0;
+  }
 
-      for (const installment of item.installments) {
-        if (installment.status !== "pendiente") continue;
-        if (installment.due_date >= monthStart && installment.due_date <= monthEnd) {
-          cobrarCount += 1;
-          if (item.currency === "ARS") cobrarArs += installment.amount;
-          else cobrarUsd += installment.amount;
-        }
-        if (installment.due_date < today) vencidasCount += 1;
-      }
-
-      for (const charge of item.subscription_charges) {
-        if (charge.status !== "pendiente") continue;
-        if (charge.period === monthStart) {
-          cobrarCount += 1;
-          if (item.currency === "ARS") cobrarArs += charge.amount;
-          else cobrarUsd += charge.amount;
-        }
-        if (charge.period < today) vencidasCount += 1;
-      }
+  for (const installment of (pendingInstallmentsData ?? []) as unknown as PendingInstallmentRow[]) {
+    const currency = installment.contract_item?.currency ?? "ARS";
+    if (installment.due_date >= monthStart && installment.due_date <= monthEnd) {
+      cobrarCount += 1;
+      if (currency === "ARS") cobrarArs += installment.amount;
+      else cobrarUsd += installment.amount;
     }
+    if (installment.due_date < today) vencidasCount += 1;
+  }
+
+  for (const charge of (pendingChargesData ?? []) as unknown as PendingChargeRow[]) {
+    const currency = charge.contract_item?.currency ?? "ARS";
+    if (charge.period === monthStart) {
+      cobrarCount += 1;
+      if (currency === "ARS") cobrarArs += charge.amount;
+      else cobrarUsd += charge.amount;
+    }
+    if (charge.period < today) vencidasCount += 1;
   }
 
   const clientesActivos = (clientsActiveCount ?? 0) as unknown as number;

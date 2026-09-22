@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import Link from "next/link";
-import { Download, Eye, FileSignature, Pencil, Save } from "lucide-react";
+import { Download, Eye, FileSignature, Pencil, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   DOCUMENT_STATUS_LABEL,
   DOCUMENT_TYPE_LABEL,
   DocumentStatusBadge,
@@ -32,6 +43,7 @@ import { formatCurrency, formatDate } from "@/lib/format";
 import {
   changeDocumentStatus,
   convertDocumentToContract,
+  deleteDocument,
   renderDocumentPdf,
   saveDocumentPdfToStorage,
 } from "@/app/(dashboard)/documentos/actions";
@@ -49,8 +61,10 @@ export function DocumentDetailView({ document }: { document: DocumentWithRelatio
   const [isPdfPending, startPdfTransition] = useTransition();
   const [isSavePending, startSaveTransition] = useTransition();
   const [isConvertPending, startConvertTransition] = useTransition();
+  const [isDeletePending, startDeleteTransition] = useTransition();
 
   const status = effectiveDocumentStatus(document);
+  const canDelete = document.status === "borrador" || document.status === "cancelado";
 
   function handleStatusChange(newStatus: DocumentStatus) {
     startStatusTransition(async () => {
@@ -99,6 +113,13 @@ export function DocumentDetailView({ document }: { document: DocumentWithRelatio
   function handleConvert() {
     startConvertTransition(async () => {
       const result = await convertDocumentToContract(document.id);
+      if (result?.error) toast.error(result.error);
+    });
+  }
+
+  function handleDelete() {
+    startDeleteTransition(async () => {
+      const result = await deleteDocument(document.id);
       if (result?.error) toast.error(result.error);
     });
   }
@@ -160,6 +181,42 @@ export function DocumentDetailView({ document }: { document: DocumentWithRelatio
             <FileSignature className="size-4" />
             Convertir en contrato
           </Button>
+        )}
+        {canDelete && (
+          <AlertDialog>
+            <AlertDialogTrigger
+              render={
+                <Button
+                  variant="outline"
+                  className="text-destructive hover:text-destructive"
+                  disabled={isDeletePending}
+                />
+              }
+            >
+              <Trash2 className="size-4" />
+              Eliminar
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Eliminar documento?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Se eliminará el documento &quot;{document.number}&quot;
+                  {document.pdf_url && " junto con su PDF guardado en Storage"}. Esta acción no se
+                  puede deshacer.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-white hover:bg-destructive/90"
+                  onClick={handleDelete}
+                  disabled={isDeletePending}
+                >
+                  Eliminar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
       </div>
 
