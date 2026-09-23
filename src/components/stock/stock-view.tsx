@@ -1,11 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Boxes, History, Plus, Search, Settings2 } from "lucide-react";
+import { AlertTriangle, Boxes, CheckCircle2, History, PackageCheck, Plus, Search, Settings2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/page-header";
+import { KpiCard } from "@/components/kpi-card";
 import {
   Table,
   TableBody,
@@ -36,6 +37,13 @@ export function StockView({
   const [managingItem, setManagingItem] = useState<InventoryItemWithProduct>();
   const [historyItem, setHistoryItem] = useState<InventoryItemWithProduct>();
 
+  const enStockCount = items.filter((i) => i.status === "en_stock").length;
+  const desplegadasCount = items.filter((i) => i.status === "asignado" || i.status === "instalado").length;
+  const bajoMinimoCount = products.filter((product) => {
+    const available = items.filter((i) => i.product_id === product.id && i.status === "en_stock").length;
+    return available < product.min_stock_threshold;
+  }).length;
+
   const searchResults = useMemo(() => {
     const term = query.trim().toLowerCase();
     if (!term) return null;
@@ -59,6 +67,18 @@ export function StockView({
           Nuevo producto
         </Button>
       </PageHeader>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard title="Total unidades" value={String(items.length)} icon={Boxes} />
+        <KpiCard title="En stock" value={String(enStockCount)} icon={PackageCheck} accent />
+        <KpiCard title="Desplegadas" value={String(desplegadasCount)} icon={CheckCircle2} />
+        <KpiCard
+          title="Bajo stock mínimo"
+          value={String(bajoMinimoCount)}
+          icon={AlertTriangle}
+          accent={bajoMinimoCount > 0 ? "destructive" : false}
+        />
+      </div>
 
       <div className="relative max-w-md">
         <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />

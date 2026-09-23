@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { AlertTriangle, FileText, Pause, Plus } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
+import { KpiCard } from "@/components/kpi-card";
 import { ContractFilters } from "@/components/contracts/contract-filters";
 import { ContractsTable } from "@/components/contracts/contracts-table";
 import { contractHasOverdueCharges } from "@/lib/contracts/overdue";
@@ -51,6 +52,10 @@ export default async function ContratosPage({
     )
   ).sort((a, b) => a.localeCompare(b, "es"));
 
+  const activosCount = contracts.filter((c) => c.status === "activo").length;
+  const pausadosCount = contracts.filter((c) => c.status === "pausado").length;
+  const vencidosCount = contracts.filter((c) => contractHasOverdueCharges(c)).length;
+
   const filtered = contracts.filter((contract) => {
     if (status && contract.status !== status) return false;
     if (category) {
@@ -78,6 +83,19 @@ export default async function ContratosPage({
           Nuevo contrato
         </Button>
       </PageHeader>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard title="Total contratos" value={String(contracts.length)} icon={FileText} />
+        <KpiCard title="Activos" value={String(activosCount)} icon={FileText} accent />
+        <KpiCard title="Pausados" value={String(pausadosCount)} icon={Pause} />
+        <KpiCard
+          title="Con cuotas vencidas"
+          value={String(vencidosCount)}
+          icon={AlertTriangle}
+          accent={vencidosCount > 0 ? "destructive" : false}
+          href="/contratos?overdue=1"
+        />
+      </div>
 
       <ContractFilters categories={categories} />
 

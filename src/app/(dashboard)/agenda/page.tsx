@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { CalendarCheck, CalendarClock, CalendarDays, CheckCircle2 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
+import { KpiCard } from "@/components/kpi-card";
 import { CalendarView } from "@/components/agenda/calendar-view";
 import { getAgendaRange, type AgendaView } from "@/lib/appointments/date-range";
 import { parseDateOnly } from "@/lib/format";
@@ -46,12 +48,23 @@ export default async function AgendaPage({
   const appointments = (appointmentsData ?? []) as unknown as AppointmentWithRelations[];
   const technicians = techniciansData ?? [];
 
+  const pendientesCount = appointments.filter((a) => a.status === "pendiente").length;
+  const confirmadosCount = appointments.filter((a) => a.status === "confirmado").length;
+  const completadosCount = appointments.filter((a) => a.status === "completado").length;
+
   return (
     <div className="flex flex-1 flex-col gap-6">
       <PageHeader
         title="Agenda"
         description="Turnos de instalación, soporte, relevamiento y mantenimiento."
       />
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard title="Turnos en el período" value={String(appointments.length)} icon={CalendarDays} />
+        <KpiCard title="Pendientes" value={String(pendientesCount)} icon={CalendarClock} />
+        <KpiCard title="Confirmados" value={String(confirmadosCount)} icon={CalendarCheck} accent />
+        <KpiCard title="Completados" value={String(completadosCount)} icon={CheckCircle2} />
+      </div>
 
       <CalendarView view={view} date={date} appointments={appointments} technicians={technicians} />
     </div>

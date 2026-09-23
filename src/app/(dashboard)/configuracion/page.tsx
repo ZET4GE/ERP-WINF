@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { AlertTriangle, Send } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
+import { KpiCard } from "@/components/kpi-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CompanySettingsForm } from "@/components/settings/company-settings-form";
 import { UsersTable } from "@/components/settings/users-table";
@@ -46,6 +48,9 @@ export default async function ConfiguracionPage() {
     reminders = (data ?? []) as unknown as ReminderLogRow[];
   }
 
+  const enviadosCount = reminders.filter((r) => r.status === "enviado").length;
+  const errorCount = reminders.filter((r) => r.status === "error").length;
+
   return (
     <div className="flex flex-1 flex-col gap-6">
       <PageHeader title="Configuración" description="Datos de WINF, usuarios, roles y preferencias." />
@@ -67,7 +72,16 @@ export default async function ConfiguracionPage() {
           </TabsContent>
         )}
         {isAdmin && (
-          <TabsContent value="recordatorios" className="pt-4">
+          <TabsContent value="recordatorios" className="flex flex-col gap-4 pt-4">
+            <div className="grid gap-4 sm:grid-cols-2 max-w-sm">
+              <KpiCard title="Enviados" value={String(enviadosCount)} icon={Send} accent />
+              <KpiCard
+                title="Con error"
+                value={String(errorCount)}
+                icon={AlertTriangle}
+                accent={errorCount > 0 ? "destructive" : false}
+              />
+            </div>
             <RemindersLog reminders={reminders} />
           </TabsContent>
         )}

@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Layers, Pencil, Plus } from "lucide-react";
+import { Layers, Pencil, Plus, Repeat } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
+import { KpiCard } from "@/components/kpi-card";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/empty-state";
@@ -76,6 +77,10 @@ export function ServiceCatalog({
     });
   }
 
+  const activosCount = services.filter((s) => s.active).length;
+  const inactivosCount = services.filter((s) => !s.active).length;
+  const recurrentesCount = services.filter((s) => s.type === "recurrente").length;
+
   return (
     <div className="flex flex-1 flex-col gap-6">
       <PageHeader
@@ -93,6 +98,13 @@ export function ServiceCatalog({
           </Button>
         </div>
       </PageHeader>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard title="Total servicios" value={String(services.length)} icon={Layers} />
+        <KpiCard title="Activos" value={String(activosCount)} icon={Layers} accent />
+        <KpiCard title="Inactivos" value={String(inactivosCount)} icon={Layers} />
+        <KpiCard title="Recurrentes" value={String(recurrentesCount)} icon={Repeat} />
+      </div>
 
       {categories.length === 0 ? (
         <EmptyState

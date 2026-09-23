@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { AlertTriangle, FileClock, FileText, Plus, Send } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
+import { KpiCard } from "@/components/kpi-card";
 import { DocumentFilters } from "@/components/documents/document-filters";
 import { DocumentsTable } from "@/components/documents/documents-table";
 import { effectiveDocumentStatus } from "@/lib/documents/status";
@@ -34,6 +35,10 @@ export default async function DocumentosPage({
 
   const documents = (data ?? []) as unknown as DocumentWithRelations[];
 
+  const borradoresCount = documents.filter((d) => effectiveDocumentStatus(d) === "borrador").length;
+  const enviadosCount = documents.filter((d) => effectiveDocumentStatus(d) === "enviado").length;
+  const vencidosCount = documents.filter((d) => effectiveDocumentStatus(d) === "vencido").length;
+
   const filtered = documents.filter((doc) => {
     if (docType && doc.doc_type !== docType) return false;
     if (status && effectiveDocumentStatus(doc) !== status) return false;
@@ -61,6 +66,18 @@ export default async function DocumentosPage({
           Nuevo documento
         </Button>
       </PageHeader>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard title="Total documentos" value={String(documents.length)} icon={FileText} />
+        <KpiCard title="Borradores" value={String(borradoresCount)} icon={FileClock} />
+        <KpiCard title="Enviados" value={String(enviadosCount)} icon={Send} accent />
+        <KpiCard
+          title="Vencidos"
+          value={String(vencidosCount)}
+          icon={AlertTriangle}
+          accent={vencidosCount > 0 ? "destructive" : false}
+        />
+      </div>
 
       <DocumentFilters />
 

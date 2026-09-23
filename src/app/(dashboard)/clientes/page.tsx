@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { AlertTriangle, Plus, UserPlus, Users } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
+import { KpiCard } from "@/components/kpi-card";
 import { ClientFilters } from "@/components/clients/client-filters";
 import { ClientsTable } from "@/components/clients/clients-table";
 import { PaginationControls } from "@/components/pagination-controls";
@@ -52,6 +53,26 @@ export default async function ClientesPage({
     .is("deleted_at", null)
     .not("city", "is", null);
 
+  const [{ count: totalCount }, { count: activosCount }, { count: morososCount }, { count: potencialesCount }] =
+    await Promise.all([
+      supabase.from("clients").select("id", { count: "exact", head: true }).is("deleted_at", null),
+      supabase
+        .from("clients")
+        .select("id", { count: "exact", head: true })
+        .is("deleted_at", null)
+        .eq("status", "activo"),
+      supabase
+        .from("clients")
+        .select("id", { count: "exact", head: true })
+        .is("deleted_at", null)
+        .eq("status", "moroso"),
+      supabase
+        .from("clients")
+        .select("id", { count: "exact", head: true })
+        .is("deleted_at", null)
+        .eq("status", "potencial"),
+    ]);
+
   const cities = Array.from(
     new Set((cityRows ?? []).map((r) => r.city as string).filter(Boolean))
   ).sort((a, b) => a.localeCompare(b, "es"));
@@ -79,6 +100,30 @@ export default async function ClientesPage({
           Nuevo cliente
         </Button>
       </PageHeader>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard title="Total clientes" value={String(totalCount ?? 0)} icon={Users} />
+        <KpiCard
+          title="Activos"
+          value={String(activosCount ?? 0)}
+          icon={Users}
+          accent
+          href="/clientes?status=activo"
+        />
+        <KpiCard
+          title="Morosos"
+          value={String(morososCount ?? 0)}
+          icon={AlertTriangle}
+          accent={(morososCount ?? 0) > 0 ? "destructive" : false}
+          href="/clientes?status=moroso"
+        />
+        <KpiCard
+          title="Potenciales"
+          value={String(potencialesCount ?? 0)}
+          icon={UserPlus}
+          href="/clientes?status=potencial"
+        />
+      </div>
 
       <ClientFilters cities={cities} />
 
