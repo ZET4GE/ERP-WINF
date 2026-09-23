@@ -5,7 +5,6 @@ import { LogOut, User as UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { GlobalSearch } from "@/components/global-search";
 import {
   Avatar,
@@ -45,7 +44,6 @@ export function SiteHeader({
       <GlobalSearch />
 
       <div className="ml-auto flex items-center gap-1">
-        <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger render={<Button variant="ghost" className="gap-2 px-2" />}>
             <Avatar className="size-6">

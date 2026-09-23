@@ -4,15 +4,25 @@ import { es } from "date-fns/locale";
 import { Wallet, Users, ReceiptText, AlertTriangle, TrendingUp, Boxes } from "lucide-react";
 
 import { KpiCard } from "@/components/kpi-card";
-import { UpcomingAppointments } from "@/components/agenda/upcoming-appointments";
 import { IncomeExpenseChart, type MonthlyPoint } from "@/components/finance/income-expense-chart";
 import { ClientsMap, type MapClient } from "@/components/dashboard/clients-map";
-import { RecentActivity, type ActivityItem } from "@/components/dashboard/recent-activity";
-import { DOCUMENT_TYPE_LABEL } from "@/components/documents/document-status-badge";
+import { CollectionDonut } from "@/components/dashboard/collection-donut";
+import { UrgentAttention, type AttentionItem } from "@/components/dashboard/urgent-attention";
+import { TodayRoute } from "@/components/dashboard/today-route";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/lib/format";
+import { getAgendaRange } from "@/lib/appointments/date-range";
 import type { AppointmentWithRelations } from "@/lib/types/appointment";
+import type { TicketPriority } from "@/lib/types/ticket";
 import type { Client } from "@/lib/types/client";
+
+const PRIORITY_RANK: Record<TicketPriority, number> = {
+  urgente: 0,
+  alta: 1,
+  media: 2,
+  baja: 3,
+};
 
 export const metadata: Metadata = {
   title: "Dashboard — WINF ERP",
@@ -44,9 +54,17 @@ export default async function DashboardPage() {
   const monthEnd = dateInputValue(new Date(now.getFullYear(), now.getMonth() + 1, 0));
   const currentMonthKey = monthKey(now);
   const chartRangeStart = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+  const { rangeStart: dayStart, rangeEnd: dayEnd } = getAgendaRange("day", now);
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: profile } = user
+    ? await supabase.from("profiles").select("full_name").eq("id", user.id).single()
+    : { data: null };
 
   const [
-    { data: appointmentsData },
+    { data: todayAppointmentsData },
     { data: subscriptionItemsData },
     { data: pendingInstallmentsData },
     { data: pendingChargesData },
@@ -54,9 +72,7 @@ export default async function DashboardPage() {
     { data: stockCount },
     { data: transactionsSummary },
     { data: clientsMapData },
-    { data: recentTransactions },
-    { data: recentContracts },
-    { data: recentDocuments },
+    { data: urgentTicketsData },
   ] = await Promise.all([
     supabase
       .from("appointments")
@@ -66,10 +82,10 @@ export default async function DashboardPage() {
          contract:contracts(id, title),
          technician:profiles(id, full_name)`
       )
-      .gte("start_at", new Date().toISOString())
+      .gte("start_at", dayStart.toISOString())
+      .lte("start_at", dayEnd.toISOString())
       .in("status", ["pendiente", "confirmado"])
-      .order("start_at", { ascending: true })
-      .limit(5),
+      .order("start_at", { ascending: true }),
     // MRR: solo ítems de suscripción de contratos activos (no hace falta traer
     // el resto de las líneas ni el historial de cuotas/cargos de todo el sistema).
     supabase
@@ -111,25 +127,14 @@ export default async function DashboardPage() {
       .not("lat", "is", null)
       .not("lng", "is", null),
     supabase
-      .from("transactions")
-      .select("id, amount, currency, date, description")
-      .eq("type", "ingreso")
-      .order("date", { ascending: false })
-      .order("created_at", { ascending: false })
-      .limit(5),
-    supabase
-      .from("contracts")
-      .select("id, title, created_at, client:clients(id, first_name, last_name, business_name)")
-      .order("created_at", { ascending: false })
-      .limit(5),
-    supabase
-      .from("documents")
-      .select("id, doc_type, number, created_at, client:clients(id, first_name, last_name, business_name)")
-      .order("created_at", { ascending: false })
-      .limit(5),
+      .from("tickets")
+      .select("id, subject, priority, created_at, client:clients(id, first_name, last_name, business_name)")
+      .in("status", ["abierto", "en_proceso"])
+      .limit(20),
   ]);
 
-  const upcomingAppointments = (appointmentsData ?? []) as unknown as AppointmentWithRelations[];
+  const todayAppointments = (todayAppointmentsData ?? []) as unknown as AppointmentWithRelations[];
+  const firstName = profile?.full_name?.split(" ")[0];
 
   interface ActiveSubscriptionItemRow {
     currency: "ARS" | "USD";
@@ -223,54 +228,39 @@ export default async function DashboardPage() {
     .filter((c) => c.lat != null && c.lng != null)
     .map((c) => ({ id: c.id, name: clientName(c), status: c.status, lat: c.lat as number, lng: c.lng as number }));
 
-  interface RecentTransactionRow { id: string; amount: number; currency: "ARS" | "USD"; date: string; description: string | null }
-  interface RecentContractRow {
+  interface UrgentTicketRow {
     id: string;
-    title: string;
-    created_at: string;
-    client: { id: string; first_name: string; last_name: string; business_name: string | null } | null;
-  }
-  interface RecentDocumentRow {
-    id: string;
-    doc_type: keyof typeof DOCUMENT_TYPE_LABEL;
-    number: string | null;
+    subject: string;
+    priority: TicketPriority;
     created_at: string;
     client: { id: string; first_name: string; last_name: string; business_name: string | null } | null;
   }
 
-  const activityItems: ActivityItem[] = [
-    ...((recentTransactions ?? []) as unknown as RecentTransactionRow[]).map((tx) => ({
-      id: tx.id,
-      kind: "pago" as const,
-      title: `Pago recibido — ${formatCurrency(tx.amount, tx.currency)}`,
-      subtitle: tx.description ?? undefined,
-      date: tx.date,
-      href: "/finanzas",
-    })),
-    ...((recentContracts ?? []) as unknown as RecentContractRow[]).map((c) => ({
-      id: c.id,
-      kind: "contrato" as const,
-      title: c.title,
-      subtitle: c.client ? clientName(c.client) : undefined,
-      date: c.created_at,
-      href: `/contratos/${c.id}`,
-    })),
-    ...((recentDocuments ?? []) as unknown as RecentDocumentRow[]).map((d) => ({
-      id: d.id,
-      kind: "documento" as const,
-      title: `${DOCUMENT_TYPE_LABEL[d.doc_type]}${d.number ? ` #${d.number}` : ""}`,
-      subtitle: d.client ? clientName(d.client) : undefined,
-      date: d.created_at,
-      href: `/documentos/${d.id}`,
-    })),
-  ]
-    .sort((a, b) => (a.date < b.date ? 1 : -1))
-    .slice(0, 8);
+  const attentionItems: AttentionItem[] = ((urgentTicketsData ?? []) as unknown as UrgentTicketRow[])
+    .sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || (a.created_at < b.created_at ? -1 : 1))
+    .slice(0, 6)
+    .map((ticket) => ({
+      id: ticket.id,
+      title: ticket.subject,
+      subtitle: ticket.client ? clientName(ticket.client) : undefined,
+      priority: ticket.priority,
+      href: `/tickets/${ticket.id}`,
+    }));
+
+  const donutData = [
+    { label: "Cobrado", value: ingresoMesArs, color: "#00C8E0" },
+    { label: "Por cobrar", value: cobrarArs, color: "#8AAABF" },
+  ];
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+        <p className="text-xs font-medium uppercase tracking-wide text-primary">
+          {format(now, "EEEE d 'de' MMMM", { locale: es })}
+        </p>
+        <h1 className="font-heading text-2xl font-semibold tracking-tight">
+          {firstName ? `Hola, ${firstName}` : "Dashboard"}
+        </h1>
         <p className="text-sm text-muted-foreground">Resumen general del negocio.</p>
       </div>
 
@@ -314,19 +304,26 @@ export default async function DashboardPage() {
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <IncomeExpenseChart title="Ingresos vs egresos — últimos 6 meses" months={months} />
+          <IncomeExpenseChart title="Flujo de caja — últimos 6 meses" months={months} variant="area" />
         </div>
-        <div className="flex flex-col gap-3">
-          <h2 className="text-sm font-medium text-muted-foreground">Próximos turnos</h2>
-          <UpcomingAppointments appointments={upcomingAppointments} />
+        <div className="flex flex-col gap-4">
+          <CollectionDonut data={donutData} />
+          <UrgentAttention items={attentionItems} />
         </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2 h-96">
-          <ClientsMap clients={mapClients} />
+        <TodayRoute appointments={todayAppointments} />
+        <div className="lg:col-span-2">
+          <Card className="flex h-96 flex-col gap-0 overflow-hidden py-0">
+            <CardHeader className="shrink-0 border-b py-4">
+              <CardTitle className="text-base">Clientes en el mapa</CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 p-0">
+              <ClientsMap clients={mapClients} />
+            </CardContent>
+          </Card>
         </div>
-        <RecentActivity items={activityItems} />
       </div>
     </div>
   );
