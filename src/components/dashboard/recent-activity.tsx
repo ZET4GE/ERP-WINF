@@ -23,8 +23,8 @@ const KIND_ICON = {
 
 const KIND_CLASS = {
   pago: "bg-primary/15 text-primary",
-  contrato: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
-  documento: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+  contrato: "bg-info/15 text-info",
+  documento: "bg-warning/15 text-warning",
 } as const;
 
 export function RecentActivity({ items }: { items: ActivityItem[] }) {

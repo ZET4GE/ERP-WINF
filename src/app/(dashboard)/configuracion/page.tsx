@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { PageHeader } from "@/components/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CompanySettingsForm } from "@/components/settings/company-settings-form";
 import { UsersTable } from "@/components/settings/users-table";
@@ -47,12 +48,7 @@ export default async function ConfiguracionPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Configuración</h1>
-        <p className="text-sm text-muted-foreground">
-          Datos de WINF, usuarios, roles y preferencias.
-        </p>
-      </div>
+      <PageHeader title="Configuración" description="Datos de WINF, usuarios, roles y preferencias." />
 
       <Tabs defaultValue="empresa">
         <TabsList>

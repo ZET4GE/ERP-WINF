@@ -14,9 +14,9 @@ import { EmptyState } from "@/components/empty-state";
 import { ContractStatusBadge } from "@/components/contracts/contract-status-badge";
 import { contractHasOverdueCharges } from "@/lib/contracts/overdue";
 import { formatDate } from "@/lib/format";
-import type { ContractWithRelations } from "@/lib/types/contract";
+import type { ContractListRow } from "@/lib/types/contract";
 
-function installmentsProgress(contract: ContractWithRelations) {
+function installmentsProgress(contract: ContractListRow) {
   const financedItems = contract.items.filter((item) => item.item_type === "equipo_financiado");
   if (financedItems.length === 0) return null;
 
@@ -28,7 +28,7 @@ function installmentsProgress(contract: ContractWithRelations) {
   return { paid, total };
 }
 
-export function ContractsTable({ contracts }: { contracts: ContractWithRelations[] }) {
+export function ContractsTable({ contracts }: { contracts: ContractListRow[] }) {
   if (contracts.length === 0) {
     return (
       <EmptyState

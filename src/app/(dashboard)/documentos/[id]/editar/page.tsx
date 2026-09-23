@@ -30,7 +30,7 @@ export default async function EditarDocumentoPage({
   return (
     <div className="flex flex-1 flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Editar documento</h1>
+        <h1 className="font-heading text-2xl font-semibold tracking-tight">Editar documento</h1>
         <p className="text-sm text-muted-foreground">{document.number}</p>
       </div>
 

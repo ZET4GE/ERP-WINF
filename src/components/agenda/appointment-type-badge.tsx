@@ -11,16 +11,16 @@ export const TYPE_LABEL: Record<AppointmentType, string> = {
 
 export const TYPE_DOT_CLASS: Record<AppointmentType, string> = {
   instalacion: "bg-primary",
-  soporte: "bg-sky-500",
-  relevamiento: "bg-amber-500",
-  mantenimiento: "bg-violet-500",
+  soporte: "bg-info",
+  relevamiento: "bg-warning",
+  mantenimiento: "bg-success",
 };
 
 const TYPE_BADGE_CLASS: Record<AppointmentType, string> = {
   instalacion: "border-transparent bg-primary/15 text-primary",
-  soporte: "border-transparent bg-sky-500/15 text-sky-600 dark:text-sky-400",
-  relevamiento: "border-transparent bg-amber-500/15 text-amber-600 dark:text-amber-400",
-  mantenimiento: "border-transparent bg-violet-500/15 text-violet-600 dark:text-violet-400",
+  soporte: "border-transparent bg-info/15 text-info",
+  relevamiento: "border-transparent bg-warning/15 text-warning",
+  mantenimiento: "border-transparent bg-success/15 text-success",
 };
 
 export function AppointmentTypeBadge({ type }: { type: AppointmentType }) {

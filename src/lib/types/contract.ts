@@ -77,3 +77,20 @@ export interface ContractWithRelations extends Contract {
   client: { id: string; first_name: string; last_name: string; business_name: string | null };
   items: ContractItemWithCharges[];
 }
+
+// Forma liviana usada por el listado de contratos: trae únicamente las
+// columnas que la tabla y el cálculo de vencidos/progreso necesitan, en vez
+// del contrato completo (montos, notas, historial de pagos, etc.).
+export interface ContractListRow {
+  id: string;
+  title: string;
+  status: ContractStatus;
+  start_date: string;
+  client: { id: string; first_name: string; last_name: string; business_name: string | null };
+  items: {
+    item_type: ContractItemType;
+    service: { id: string; name: string; category_id: string; category: { id: string; name: string } | null } | null;
+    installments: { status: ChargeStatus; due_date: string }[];
+    subscription_charges: { status: ChargeStatus; period: string }[];
+  }[];
+}

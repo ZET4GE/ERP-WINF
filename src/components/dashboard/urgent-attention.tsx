@@ -16,7 +16,7 @@ export interface AttentionItem {
 
 const PRIORITY_DOT_CLASS: Record<TicketPriority, string> = {
   urgente: "bg-destructive",
-  alta: "bg-amber-500",
+  alta: "bg-warning",
   media: "bg-primary",
   baja: "bg-muted-foreground",
 };

@@ -10,7 +10,7 @@ export const STATUS_LABEL: Record<AppointmentStatus, string> = {
 };
 
 const STATUS_CLASS: Record<AppointmentStatus, string> = {
-  pendiente: "border-transparent bg-amber-500/15 text-amber-600 dark:text-amber-400",
+  pendiente: "border-transparent bg-warning/15 text-warning",
   confirmado: "border-transparent bg-primary/15 text-primary",
   completado: "border-transparent bg-muted text-muted-foreground",
   cancelado: "border-transparent bg-destructive/15 text-destructive",

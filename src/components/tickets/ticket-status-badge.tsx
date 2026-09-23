@@ -10,8 +10,8 @@ export const TICKET_STATUS_LABEL: Record<TicketStatus, string> = {
 };
 
 const STATUS_CLASS: Record<TicketStatus, string> = {
-  abierto: "border-transparent bg-blue-500/15 text-blue-600 dark:text-blue-400",
-  en_proceso: "border-transparent bg-amber-500/15 text-amber-600 dark:text-amber-400",
+  abierto: "border-transparent bg-info/15 text-info",
+  en_proceso: "border-transparent bg-warning/15 text-warning",
   resuelto: "border-transparent bg-primary/15 text-primary",
   cerrado: "border-transparent bg-muted text-muted-foreground",
 };

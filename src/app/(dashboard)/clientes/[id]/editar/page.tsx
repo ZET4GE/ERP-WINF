@@ -26,7 +26,7 @@ export default async function EditarClientePage({
   return (
     <div className="flex flex-1 flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="font-heading text-2xl font-semibold tracking-tight">
           Editar cliente
         </h1>
         <p className="text-sm text-muted-foreground">

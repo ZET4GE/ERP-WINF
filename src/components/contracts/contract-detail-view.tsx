@@ -261,7 +261,7 @@ export function ContractDetailView({ contract }: { contract: ContractWithRelatio
           >
             {contract.client.first_name} {contract.client.last_name}
           </Link>
-          <h1 className="text-2xl font-semibold tracking-tight">{contract.title}</h1>
+          <h1 className="font-heading text-2xl font-semibold tracking-tight">{contract.title}</h1>
           <p className="text-sm text-muted-foreground">
             Instalación: {formatDate(contract.start_date)}
           </p>

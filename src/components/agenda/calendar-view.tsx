@@ -96,7 +96,7 @@ export function CalendarView({
           <Button variant="outline" size="icon-sm" onClick={goNext}>
             <ChevronRight className="size-4" />
           </Button>
-          <h2 className="ml-1 text-lg font-semibold capitalize tracking-tight">
+          <h2 className="ml-1 font-heading text-lg font-semibold capitalize tracking-tight">
             {title}
           </h2>
         </div>

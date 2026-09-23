@@ -12,9 +12,9 @@ export const INVENTORY_STATUS_LABEL: Record<InventoryStatus, string> = {
 
 const STATUS_CLASS: Record<InventoryStatus, string> = {
   en_stock: "border-transparent bg-primary/15 text-primary",
-  asignado: "border-transparent bg-amber-500/15 text-amber-600 dark:text-amber-400",
-  instalado: "border-transparent bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
-  rma: "border-transparent bg-orange-500/15 text-orange-600 dark:text-orange-400",
+  asignado: "border-transparent bg-warning/15 text-warning",
+  instalado: "border-transparent bg-success/15 text-success",
+  rma: "border-transparent bg-warning/15 text-warning",
   baja: "border-transparent bg-destructive/15 text-destructive",
 };
 

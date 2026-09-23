@@ -1,4 +1,4 @@
-import type { ContractWithRelations } from "@/lib/types/contract";
+import type { ContractListRow } from "@/lib/types/contract";
 
 function todayDateOnly(): string {
   const now = new Date();
@@ -15,7 +15,7 @@ export function isOverdueDate(dateOnly: string): boolean {
 // Compara strings "yyyy-MM-dd" directamente (orden lexicográfico == orden
 // cronológico en ese formato), sin pasar por Date para no reintroducir
 // problemas de huso horario.
-export function contractHasOverdueCharges(contract: ContractWithRelations): boolean {
+export function contractHasOverdueCharges(contract: ContractListRow): boolean {
   const today = todayDateOnly();
   return contract.items.some((item) => {
     const overdueInstallment = item.installments.some(

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { createClient } from "@/lib/supabase/server";
+import { PageHeader } from "@/components/page-header";
 import { TicketFilters } from "@/components/tickets/ticket-filters";
 import { TicketsTable } from "@/components/tickets/tickets-table";
 import { TicketForm } from "@/components/tickets/ticket-form";
@@ -74,15 +75,12 @@ export default async function TicketsPage({
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Tickets</h1>
-          <p className="text-sm text-muted-foreground">
-            {filtered.length} {filtered.length === 1 ? "ticket" : "tickets"}
-          </p>
-        </div>
+      <PageHeader
+        title="Tickets"
+        description={`${filtered.length} ${filtered.length === 1 ? "ticket" : "tickets"}`}
+      >
         <TicketForm />
-      </div>
+      </PageHeader>
 
       <TicketMetrics
         openCount={openCount}

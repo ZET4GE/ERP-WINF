@@ -12,9 +12,9 @@ export const DOCUMENT_STATUS_LABEL: Record<DocumentStatus, string> = {
 
 const STATUS_CLASS: Record<DocumentStatus, string> = {
   borrador: "border-transparent bg-muted text-muted-foreground",
-  enviado: "border-transparent bg-blue-500/15 text-blue-600 dark:text-blue-400",
+  enviado: "border-transparent bg-info/15 text-info",
   aceptado: "border-transparent bg-primary/15 text-primary",
-  cancelado: "border-transparent bg-zinc-500/15 text-zinc-600 line-through dark:text-zinc-400",
+  cancelado: "border-transparent bg-muted text-muted-foreground line-through",
   vencido: "border-transparent bg-destructive/15 text-destructive",
 };
 

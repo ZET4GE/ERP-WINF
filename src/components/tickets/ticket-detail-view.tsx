@@ -65,7 +65,7 @@ export function TicketDetailView({
     <div className="flex flex-1 flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{ticket.subject}</h1>
+          <h1 className="font-heading text-2xl font-semibold tracking-tight">{ticket.subject}</h1>
           {ticket.client && (
             <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <Building2 className="size-3.5" />

@@ -11,8 +11,8 @@ export const TICKET_PRIORITY_LABEL: Record<TicketPriority, string> = {
 
 const PRIORITY_CLASS: Record<TicketPriority, string> = {
   baja: "border-transparent bg-muted text-muted-foreground",
-  media: "border-transparent bg-blue-500/15 text-blue-600 dark:text-blue-400",
-  alta: "border-transparent bg-amber-500/15 text-amber-600 dark:text-amber-400",
+  media: "border-transparent bg-info/15 text-info",
+  alta: "border-transparent bg-warning/15 text-warning",
   urgente: "border-transparent bg-destructive/15 text-destructive",
 };
 

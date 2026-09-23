@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/page-header";
 import { DocumentFilters } from "@/components/documents/document-filters";
 import { DocumentsTable } from "@/components/documents/documents-table";
 import { effectiveDocumentStatus } from "@/lib/documents/status";
@@ -51,18 +52,15 @@ export default async function DocumentosPage({
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Documentos</h1>
-          <p className="text-sm text-muted-foreground">
-            {filtered.length} {filtered.length === 1 ? "documento" : "documentos"}
-          </p>
-        </div>
+      <PageHeader
+        title="Documentos"
+        description={`${filtered.length} ${filtered.length === 1 ? "documento" : "documentos"}`}
+      >
         <Button render={<Link href="/documentos/nuevo" />}>
           <Plus />
           Nuevo documento
         </Button>
-      </div>
+      </PageHeader>
 
       <DocumentFilters />
 

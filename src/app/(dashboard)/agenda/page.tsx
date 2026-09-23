@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { createClient } from "@/lib/supabase/server";
+import { PageHeader } from "@/components/page-header";
 import { CalendarView } from "@/components/agenda/calendar-view";
 import { getAgendaRange, type AgendaView } from "@/lib/appointments/date-range";
 import { parseDateOnly } from "@/lib/format";
@@ -47,12 +48,10 @@ export default async function AgendaPage({
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Agenda</h1>
-        <p className="text-sm text-muted-foreground">
-          Turnos de instalación, soporte, relevamiento y mantenimiento.
-        </p>
-      </div>
+      <PageHeader
+        title="Agenda"
+        description="Turnos de instalación, soporte, relevamiento y mantenimiento."
+      />
 
       <CalendarView view={view} date={date} appointments={appointments} technicians={technicians} />
     </div>

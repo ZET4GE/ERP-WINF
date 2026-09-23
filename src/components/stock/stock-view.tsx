@@ -5,6 +5,7 @@ import { Boxes, History, Plus, Search, Settings2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/page-header";
 import {
   Table,
   TableBody,
@@ -47,13 +48,7 @@ export function StockView({
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Stock</h1>
-          <p className="text-sm text-muted-foreground">
-            Inventario serializado por número de serie.
-          </p>
-        </div>
+      <PageHeader title="Stock" description="Inventario serializado por número de serie.">
         <Button
           onClick={() => {
             setEditingProduct(undefined);
@@ -63,7 +58,7 @@ export function StockView({
           <Plus />
           Nuevo producto
         </Button>
-      </div>
+      </PageHeader>
 
       <div className="relative max-w-md">
         <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />

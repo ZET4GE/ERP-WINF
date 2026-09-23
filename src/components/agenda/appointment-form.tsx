@@ -322,7 +322,7 @@ export function AppointmentForm({
           </div>
 
           {overlaps.length > 0 && (
-            <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs text-amber-600 dark:text-amber-400">
+            <p className="rounded-lg border border-warning/30 bg-warning/10 p-2.5 text-xs text-warning">
               Se superpone con: {overlaps.map((o) => o.label).join(", ")}
             </p>
           )}

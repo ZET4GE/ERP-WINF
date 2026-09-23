@@ -12,7 +12,7 @@ const STATUS_LABEL: Record<ClientStatus, string> = {
 const STATUS_CLASS: Record<ClientStatus, string> = {
   activo: "border-transparent bg-primary/15 text-primary",
   moroso: "border-transparent bg-destructive/15 text-destructive",
-  potencial: "border-transparent bg-amber-500/15 text-amber-600 dark:text-amber-400",
+  potencial: "border-transparent bg-warning/15 text-warning",
   inactivo: "border-transparent bg-muted text-muted-foreground",
 };
 

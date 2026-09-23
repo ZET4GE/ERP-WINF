@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/page-header";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/empty-state";
@@ -77,15 +78,10 @@ export function ServiceCatalog({
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Servicios y catálogo
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Categorías y servicios que se ofrecen a los clientes.
-          </p>
-        </div>
+      <PageHeader
+        title="Servicios y catálogo"
+        description="Categorías y servicios que se ofrecen a los clientes."
+      >
         <div className="flex gap-2">
           <Button variant="outline" onClick={openNewCategory}>
             <Plus />
@@ -96,7 +92,7 @@ export function ServiceCatalog({
             Nuevo servicio
           </Button>
         </div>
-      </div>
+      </PageHeader>
 
       {categories.length === 0 ? (
         <EmptyState

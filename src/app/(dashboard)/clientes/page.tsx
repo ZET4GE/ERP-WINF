@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/page-header";
 import { ClientFilters } from "@/components/clients/client-filters";
 import { ClientsTable } from "@/components/clients/clients-table";
 import { PaginationControls } from "@/components/pagination-controls";
@@ -69,18 +70,15 @@ export default async function ClientesPage({
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Clientes</h1>
-          <p className="text-sm text-muted-foreground">
-            {total} {total === 1 ? "cliente cargado" : "clientes cargados"}
-          </p>
-        </div>
+      <PageHeader
+        title="Clientes"
+        description={`${total} ${total === 1 ? "cliente cargado" : "clientes cargados"}`}
+      >
         <Button render={<Link href="/clientes/nuevo" />}>
           <Plus />
           Nuevo cliente
         </Button>
-      </div>
+      </PageHeader>
 
       <ClientFilters cities={cities} />
 

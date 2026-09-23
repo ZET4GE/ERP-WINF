@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/page-header";
 import { createClient } from "@/lib/supabase/server";
 import { TransactionFilters } from "@/components/finance/transaction-filters";
 import { TransactionsTable } from "@/components/finance/transactions-table";
@@ -252,13 +253,7 @@ export default async function FinanzasPage({
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Finanzas</h1>
-          <p className="text-sm text-muted-foreground">
-            Libro de movimientos, gastos y automatización mensual.
-          </p>
-        </div>
+      <PageHeader title="Finanzas" description="Libro de movimientos, gastos y automatización mensual.">
         <div className="flex flex-wrap gap-2">
           <RecurringExpenseForm
             categories={categories}
@@ -271,7 +266,7 @@ export default async function FinanzasPage({
           />
           <ManualExpenseForm categories={categories} />
         </div>
-      </div>
+      </PageHeader>
 
       <MonthlySummary
         months={months}
@@ -282,7 +277,7 @@ export default async function FinanzasPage({
       <MonthlyReportCard />
 
       <div className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold tracking-tight">
+        <h2 className="font-heading text-lg font-semibold tracking-tight">
           Cuotas pendientes de pago
           {pendingCharges.length > 0 && (
             <span className="ml-2 text-sm font-normal text-muted-foreground">
@@ -294,13 +289,13 @@ export default async function FinanzasPage({
       </div>
 
       <div className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold tracking-tight">Libro de movimientos</h2>
+        <h2 className="font-heading text-lg font-semibold tracking-tight">Libro de movimientos</h2>
         <TransactionFilters categories={categories} />
         <TransactionsTable transactions={transactions} />
       </div>
 
       <div className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold tracking-tight">Gastos recurrentes</h2>
+        <h2 className="font-heading text-lg font-semibold tracking-tight">Gastos recurrentes</h2>
         <RecurringExpensesList recurringExpenses={recurringExpenses} categories={categories} />
       </div>
     </div>
